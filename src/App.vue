@@ -1,24 +1,37 @@
 <!-- src/App.vue -->
 <template>
-  <div id="app">
-    <nav v-if="isLoggedIn">
-      <router-link to="/dashboard">Dashboard</router-link>
-      <a href="#" @click.prevent="logout">Logout</a>
+  <div id="app" class="min-h-screen flex flex-col bg-gray-100">
+    <nav
+      v-if="isLoggedIn"
+      class="bg-white shadow-md py-4 px-6 flex justify-between items-center"
+    >
+      <router-link
+        to="/dashboard"
+        class="text-blue-500 hover:text-blue-700 font-semibold"
+        >Dashboard</router-link
+      >
+      <a
+        href="#"
+        @click.prevent="logout"
+        class="text-red-500 hover:text-red-700 font-semibold"
+        >Logout</a
+      >
     </nav>
-    <router-view></router-view>
+    <div class="flex-1 p-6">
+      <router-view></router-view>
+    </div>
   </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue';
-import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
+import { computed, onMounted } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
-console.log('Stored token:', localStorage.getItem('token'));
-
+console.log("Stored token:", localStorage.getItem("token"));
 
 export default {
-  name: 'App',
+  name: "App",
   setup() {
     const store = useStore();
     const router = useRouter();
@@ -26,20 +39,20 @@ export default {
     const isLoggedIn = computed(() => !!store.state.auth.token);
 
     const logout = () => {
-      store.dispatch('auth/logout');
-      router.push('/login');
+      store.dispatch("auth/logout");
+      router.push("/login");
     };
 
     onMounted(() => {
-      store.dispatch('auth/checkAuth');
+      store.dispatch("auth/checkAuth");
     });
 
     return {
       isLoggedIn,
-      logout
+      logout,
     };
-  }
-}
+  },
+};
 </script>
 
 <style>

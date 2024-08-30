@@ -46,13 +46,11 @@ export default {
     },
     async getUserInfo({ commit }) {
       try {
-        const response = await api.post("/user/user-information",{
-                    email: "homework@eva.guru"
-                });
+        const response = await api.post("/user/user-information", { email: "homework@eva.guru" });
+        console.log("User Info:", response.data);
         commit("SET_USER_INFO", response.data);
       } catch (error) {
         console.error("Failed to get user info:", error);
-        // If we get a 401 error, clear the auth state
         if (error.response && error.response.status === 401) {
           commit("CLEAR_AUTH");
         }

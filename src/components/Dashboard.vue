@@ -1,7 +1,7 @@
 <!-- src/components/Dashboard.vue -->
 <template>
   <div>
-    <h1>Sales Dashboard</h1>
+    <h1 class="align-center text-3xl font-bold">Dashboard</h1>
     <SalesChart />
     <SkuTable />
   </div>

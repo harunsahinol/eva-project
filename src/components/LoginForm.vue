@@ -1,13 +1,21 @@
 <!-- src/components/LoginForm.vue -->
 <template>
-  <div>
-    <h2>Login</h2>
-    <form @submit.prevent="handleSubmit">
-      <input v-model="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
+  <div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Login</h2>
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <input v-model="email" type="email" placeholder="Email" required 
+               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        <input v-model="password" type="password" placeholder="Password" required
+               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        <button type="submit" 
+                class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300">
+          Login
+        </button>
+      </form>
+    </div>
   </div>
+  
 </template>
 
 <script>
@@ -42,3 +50,7 @@ export default {
   },
 };
 </script>
+
+<style>
+
+</style>
