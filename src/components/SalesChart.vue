@@ -38,19 +38,6 @@ export default {
       store.dispatch("sales/fetchSalesData", { days: selectedDays.value });
     };
 
-    const handleColumnClick = (columnDate) => {
-      if (!selectedColumns.value.includes(columnDate)) {
-        selectedColumns.value.push(columnDate);
-      } else {
-        selectedColumns.value = [
-          ...selectedColumns.value.filter((date) => date !== columnDate),
-          columnDate,
-        ];
-      }
-      selectedColumns.value = selectedColumns.value.slice(-5);
-      store.dispatch("sales/updateSelectedColumns", selectedColumns.value);
-    };
-
     const renderChart = () => {
       if (chartContainer.value && salesData.value?.Data?.item?.length > 0) {
         const chartData = salesData.value.Data.item.map((item) => ({
@@ -88,14 +75,22 @@ export default {
                 events: {
                   click: function () {
                     const columnDate = this.category;
-                    if (selectedColumns.value.length < 2) {
-                      if (!selectedColumns.value.includes(columnDate)) {
-                        selectedColumns.value.push(columnDate);
+                    if (selectedColumns.value.length === 0) {
+                      selectedColumns.value.push(columnDate);
+                    } else if (selectedColumns.value.length === 1) {
+                      if (selectedColumns.value[0] !== columnDate) {
+                        selectedColumns.value.unshift(columnDate);
+                      } else {
+                        selectedColumns.value = [];
                       }
                     } else {
-                      selectedColumns.value[0] = columnDate;
+                      if (selectedColumns.value.includes(columnDate)) {
+                        selectedColumns.value = selectedColumns.value.filter(date => date !== columnDate);
+                      } else {
+                        selectedColumns.value = [columnDate, selectedColumns.value[0]];
+                      }
                     }
-                    selectedColumns.value = selectedColumns.value.slice(-2);
+                    store.dispatch("sales/updateSelectedColumns", selectedColumns.value);
                   },
                 },
               },

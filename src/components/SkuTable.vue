@@ -55,7 +55,7 @@ export default {
     const skuData = computed(() => store.state.sales.skuData);
     const skuRefundRates = computed(() => store.state.sales.skuRefundRates);
 
-    const isDaysCompare = computed(() => selectedColumns.value.length === 2);
+    const isDaysCompare = computed(() => selectedColumns.value.length > 1);
 
     const tableHeaders = computed(() => [
       "SKU",
