@@ -1,17 +1,10 @@
 <!-- src/components/SkuTable.vue -->
 <template>
-  <div
-    v-if="paginatedSkuData.length > 0"
-    class="mt-6 p-6 bg-white rounded-lg shadow-md"
-  >
+  <div v-if="paginatedSkuData.length > 0" class="mt-6 p-6 bg-white rounded-lg shadow-md">
     <table class="min-w-full bg-white border border-gray-200 rounded-lg">
       <thead>
         <tr class="bg-gray-100">
-          <th
-            v-for="header in tableHeaders"
-            :key="header"
-            class="py-2 px-4 text-left text-gray-600 font-semibold"
-          >
+          <th v-for="header in tableHeaders" :key="header" class="py-2 px-4 text-left text-gray-600 font-semibold">
             {{ header }}
           </th>
         </tr>
@@ -20,9 +13,7 @@
         <tr v-for="item in paginatedSkuData" :key="item.sku" class="border-t">
           <td class="py-2 px-4">{{ item.sku }}</td>
           <td class="py-2 px-4">{{ item.productName }}</td>
-          <td class="py-2 px-4">
-            {{ formatSalesUnit(item.amount, item.qty) }}
-          </td>
+          <td class="py-2 px-4">{{ formatSalesUnit(item.amount, item.qty) }}</td>
           <td v-if="isDaysCompare" class="py-2 px-4">
             {{ formatSalesUnit(item.amount2, item.qty2) }}
           </td>
@@ -38,9 +29,7 @@
       >
         Previous
       </button>
-      <span class="text-gray-600"
-        >Page {{ currentPage }} of {{ totalPages }}</span
-      >
+      <span class="text-gray-600">Page {{ currentPage }} of {{ totalPages }}</span>
       <button
         @click="nextPage"
         :disabled="currentPage === totalPages"
@@ -71,10 +60,8 @@ export default {
     const tableHeaders = computed(() => [
       "SKU",
       "Product Name",
-      `Sales / Unit (${selectedColumns.value[0] || ""})`,
-      ...(isDaysCompare.value
-        ? [`Sales / Unit (${selectedColumns.value[1] || ""})`]
-        : []),
+      `Sales / Unit (${selectedColumns.value[0] || ''})`,
+      ...(isDaysCompare.value ? [`Sales / Unit (${selectedColumns.value[1] || ''})`] : []),
       "SKU Refund Rate",
     ]);
 
@@ -92,13 +79,6 @@ export default {
 
     const fetchSkuData = () => {
       if (selectedColumns.value.length > 0) {
-        console.log("Fetching SKU data with:", {
-          isDaysCompare: isDaysCompare.value ? 1 : 0,
-          pageNumber: Math.ceil(currentPage.value / 3),
-          pageSize: 30,
-          salesDate: selectedColumns.value[0],
-          salesDate2: selectedColumns.value[1] || "",
-        });
         store.dispatch("sales/fetchSkuData", {
           isDaysCompare: isDaysCompare.value ? 1 : 0,
           pageNumber: Math.ceil(currentPage.value / 3),
@@ -108,7 +88,6 @@ export default {
         });
       }
     };
-
 
     const skuRefundRatesMap = computed(() => {
       const data = skuRefundRates.value.Data || [];
@@ -150,32 +129,13 @@ export default {
 
     const formatSalesUnit = (amount, qty) => {
       if (amount === undefined || qty === undefined) {
-        return "N/A";
+        return 'N/A';
       }
       return `${amount} / ${qty}`;
     };
-    // Update the watch effect
-    watch(
-      selectedColumns,
-      (newColumns, oldColumns) => {
-        console.log("Selected columns changed:", newColumns, oldColumns);
-        currentPage.value = 1; // Reset to first page when selection changes
-        fetchSkuData();
-      },
-      { deep: true }
-    );
 
-    // Add a new watch effect for skuData
-    watch(
-      skuData,
-      (newData, oldData) => {
-        console.log("SKU data updated:", newData);
-        if (newData !== oldData) {
-          fetchSkuRefundRates();
-        }
-      },
-      { deep: true }
-    );
+    watch(selectedColumns, fetchSkuData, { immediate: true });
+    watch(paginatedSkuData, fetchSkuRefundRates, { immediate: true });
 
     return {
       paginatedSkuData,
