@@ -1,22 +1,23 @@
 <!-- src/components/SalesChart.vue -->
 <template>
   <div class="relative">
-    <select v-model="selectedDays" @change="updateChart" 
-            class="absolute z-10 top-0 right-0 bg-white border border-gray-300 rounded-lg p-2">
+    <select
+      v-model="selectedDays"
+      @change="updateChart"
+      class="absolute z-10 top-0 right-0 bg-white border border-gray-300 rounded-lg p-2"
+    >
       <option v-for="option in dayOptions" :key="option" :value="option">
         {{ option }} days
       </option>
     </select>
-    <div  ref="chartContainer" class="mt-6"></div>
+    <div ref="chartContainer" class="mt-6"></div>
   </div>
-  
 </template>
 
 <script>
 import { ref, onMounted, watch, computed } from "vue";
 import { useStore } from "vuex";
 import Highcharts from "highcharts";
-import axios from "axios";
 
 export default {
   setup() {
@@ -29,19 +30,11 @@ export default {
     const salesData = computed(() => store.state.sales.salesData);
 
     const updateChart = () => {
-      console.log("Fetching data for", selectedDays.value, "days");
-      store
-        .dispatch("sales/fetchSalesData", { days: selectedDays.value })
-        .then(() => console.log("Data fetched:", store.state.sales.salesData))
-        .catch((error) => console.error("Error fetching data:", error));
+      store.dispatch("sales/fetchSalesData", { days: selectedDays.value });
     };
 
     const renderChart = () => {
-      if (
-        chartContainer.value &&
-        salesData.value.Data &&
-        salesData.value.Data.item.length > 0
-      ) {
+      if (chartContainer.value && salesData.value?.Data?.item?.length > 0) {
         const chartData = salesData.value.Data.item.map((item) => ({
           y: item.profit,
           totalSales: item.fbaAmount + item.fbmAmount,
@@ -49,12 +42,12 @@ export default {
           fbaAmount: item.fbaAmount,
           fbmAmount: item.fbmAmount,
           profit: item.profit,
-          sku: item.sku, // Assuming SKU is available in sales data
+          sku: item.sku,
         }));
 
         Highcharts.chart(chartContainer.value, {
           chart: { type: "column" },
-          title: { text: "Daily Sales Overview" },
+          title: { text: "Daily Sales Overview", align: "left" },
           xAxis: {
             categories: salesData.value.Data.item.map((item) => item.date),
             crosshair: true,
@@ -63,11 +56,11 @@ export default {
           tooltip: {
             formatter: function () {
               return `<b>${this.x}</b><br/>
-            Total Sales: ${this.point.totalSales}<br/>
-            Shipping: ${this.point.fbaShippingAmount}<br/>
-            Profit: ${this.point.profit}<br/>
-            FBA Sales: ${this.point.fbaAmount}<br/>
-            FBM Sales: ${this.point.fbmAmount}`;
+                Total Sales: ${this.point.totalSales}<br/>
+                Shipping: ${this.point.fbaShippingAmount}<br/>
+                Profit: ${this.point.profit}<br/>
+                FBA Sales: ${this.point.fbaAmount}<br/>
+                FBM Sales: ${this.point.fbmAmount}`;
             },
           },
           plotOptions: {
@@ -78,13 +71,14 @@ export default {
                 events: {
                   click: function () {
                     const columnDate = this.category;
-                    if (selectedColumns.value.includes(columnDate)) {
-                      selectedColumns.value = selectedColumns.value.filter(
-                        (date) => date !== columnDate
-                      );
-                    } else if (selectedColumns.value.length < 2) {
-                      selectedColumns.value.push(columnDate);
+                    if (selectedColumns.value.length < 2) {
+                      if (!selectedColumns.value.includes(columnDate)) {
+                        selectedColumns.value.push(columnDate);
+                      }
+                    } else {
+                      selectedColumns.value[0] = columnDate;
                     }
+                    selectedColumns.value = selectedColumns.value.slice(-2);
                     updateSkuTable();
                   },
                 },
@@ -92,10 +86,7 @@ export default {
             },
           },
           series: [
-            {
-              name: "Profit",
-              data: chartData,
-            },
+            { name: "Profit", data: chartData },
             {
               name: "FBA Amount",
               data: salesData.value.Data.item.map((item) => ({
@@ -121,8 +112,6 @@ export default {
             },
           ],
         });
-      } else {
-        console.error("No sales data available for chart rendering.");
       }
     };
 
@@ -136,7 +125,9 @@ export default {
       };
       store.dispatch("sales/fetchSkuData", params);
     };
-    watch(salesData, renderChart, selectedColumns, updateSkuTable);
+
+    watch(salesData, renderChart);
+    watch(selectedColumns, updateSkuTable);
 
     onMounted(() => {
       updateChart();

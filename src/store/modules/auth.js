@@ -46,7 +46,9 @@ export default {
     },
     async getUserInfo({ commit }) {
       try {
-        const response = await api.post("/user/user-information", { email: "homework@eva.guru" });
+        const response = await api.post("/user/user-information", {
+          email: "homework@eva.guru",
+        });
         console.log("User Info:", response.data);
         commit("SET_USER_INFO", response.data);
       } catch (error) {
