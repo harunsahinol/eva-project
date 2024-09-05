@@ -38,12 +38,24 @@ export default {
       store.dispatch("sales/fetchSalesData", { days: selectedDays.value });
     };
 
+    const handleColumnClick = (columnDate) => {
+      if (!selectedColumns.value.includes(columnDate)) {
+        selectedColumns.value.push(columnDate);
+      } else {
+        selectedColumns.value = [
+          ...selectedColumns.value.filter((date) => date !== columnDate),
+          columnDate,
+        ];
+      }
+      selectedColumns.value = selectedColumns.value.slice(-5);
+      store.dispatch("sales/updateSelectedColumns", selectedColumns.value);
+    };
+
     const renderChart = () => {
       if (chartContainer.value && salesData.value?.Data?.item?.length > 0) {
         const chartData = salesData.value.Data.item.map((item) => ({
           y: item.profit,
           totalSales: item.fbaAmount + item.fbmAmount,
-          fbaShippingAmount: item.fbaShippingAmount,
           fbaAmount: item.fbaAmount,
           fbmAmount: item.fbmAmount,
           profit: item.profit,
@@ -63,7 +75,6 @@ export default {
             formatter: function () {
               return `<b>${this.x}</b><br/>
                 Total Sales: ${this.point.totalSales}<br/>
-                Shipping: ${this.point.fbaShippingAmount}<br/>
                 Profit: ${this.point.profit}<br/>
                 FBA Sales: ${this.point.fbaAmount}<br/>
                 FBM Sales: ${this.point.fbmAmount}`;
@@ -94,11 +105,11 @@ export default {
             { name: "Profit", data: chartData },
             {
               name: "FBA Amount",
-              data: chartData.map(item => ({ ...item, y: item.fbaAmount })),
+              data: chartData.map((item) => ({ ...item, y: item.fbaAmount })),
             },
             {
               name: "FBM Amount",
-              data: chartData.map(item => ({ ...item, y: item.fbmAmount })),
+              data: chartData.map((item) => ({ ...item, y: item.fbmAmount })),
             },
           ],
         });

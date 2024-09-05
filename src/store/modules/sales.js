@@ -38,9 +38,11 @@ export default {
         commit("SET_SALES_DATA", response.data);
       } catch (error) {
         console.error("Failed to fetch sales data:", error);
-        throw error;
+        // Handle error state here, e.g., by setting an error flag in the state
+        commit("SET_SALES_ERROR", error);
       }
     },
+    
     async fetchSkuData({ commit, rootState }, params) {
       try {
         const { marketplaceName, storeId } = rootState.auth.userInfo.Data.user.store[0];
