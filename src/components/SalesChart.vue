@@ -11,6 +11,7 @@
       </option>
     </select>
     <div ref="chartContainer" class="mt-6"></div>
+    <SkuTable :selectedColumns="selectedColumns" />
   </div>
 </template>
 
@@ -18,8 +19,12 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { useStore } from "vuex";
 import Highcharts from "highcharts";
+import SkuTable from "./SkuTable.vue";
 
 export default {
+  components: {
+    SkuTable,
+  },
   setup() {
     const store = useStore();
     const chartContainer = ref(null);
@@ -43,6 +48,7 @@ export default {
           fbmAmount: item.fbmAmount,
           profit: item.profit,
           sku: item.sku,
+          date: item.date,
         }));
 
         Highcharts.chart(chartContainer.value, {
@@ -79,7 +85,6 @@ export default {
                       selectedColumns.value[0] = columnDate;
                     }
                     selectedColumns.value = selectedColumns.value.slice(-2);
-                    updateSkuTable();
                   },
                 },
               },
@@ -89,49 +94,24 @@ export default {
             { name: "Profit", data: chartData },
             {
               name: "FBA Amount",
-              data: salesData.value.Data.item.map((item) => ({
-                y: item.fbaAmount,
-                totalSales: item.fbaAmount + item.fbmAmount,
-                fbaShippingAmount: item.fbaShippingAmount,
-                fbaAmount: item.fbaAmount,
-                fbmAmount: item.fbmAmount,
-                profit: item.profit,
-              })),
+              data: chartData.map(item => ({ ...item, y: item.fbaAmount })),
             },
             {
               name: "FBM Amount",
-              data: salesData.value.Data.item.map((item) => ({
-                y: item.fbmAmount,
-                totalSales: item.fbaAmount + item.fbmAmount,
-                fbaShippingAmount: item.fbaShippingAmount,
-                fbaAmount: item.fbaAmount,
-                fbmAmount: item.fbmAmount,
-                profit: item.profit,
-                sku: item.sku,
-              })),
+              data: chartData.map(item => ({ ...item, y: item.fbmAmount })),
             },
           ],
         });
       }
     };
 
-    const updateSkuTable = () => {
-      const params = {
-        isDaysCompare: selectedColumns.value.length === 2 ? 1 : 0,
-        pageNumber: 1,
-        pageSize: 30,
-        salesDate: selectedColumns.value[0] || "",
-        salesDate2: selectedColumns.value[1] || "",
-      };
-      store.dispatch("sales/fetchSkuData", params);
-    };
-
     watch(salesData, renderChart);
-    watch(selectedColumns, updateSkuTable);
+    watch(selectedColumns, () => {
+      store.dispatch("sales/updateSelectedColumns", selectedColumns.value);
+    });
 
     onMounted(() => {
       updateChart();
-      updateSkuTable();
     });
 
     return {
@@ -139,6 +119,7 @@ export default {
       selectedDays,
       dayOptions,
       updateChart,
+      selectedColumns,
     };
   },
 };

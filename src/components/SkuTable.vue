@@ -1,17 +1,10 @@
 <!-- src/components/SkuTable.vue -->
 <template>
-  <div
-    v-if="paginatedSkuData.length > 0"
-    class="p-6 bg-white rounded-lg shadow-md"
-  >
+  <div v-if="paginatedSkuData.length > 0" class="mt-6 p-6 bg-white rounded-lg shadow-md">
     <table class="min-w-full bg-white border border-gray-200 rounded-lg">
       <thead>
         <tr class="bg-gray-100">
-          <th
-            v-for="header in tableHeaders"
-            :key="header"
-            class="py-2 px-4 text-left text-gray-600 font-semibold"
-          >
+          <th v-for="header in tableHeaders" :key="header" class="py-2 px-4 text-left text-gray-600 font-semibold">
             {{ header }}
           </th>
         </tr>
@@ -20,7 +13,10 @@
         <tr v-for="item in paginatedSkuData" :key="item.sku" class="border-t">
           <td class="py-2 px-4">{{ item.sku }}</td>
           <td class="py-2 px-4">{{ item.productName }}</td>
-          <td class="py-2 px-4">{{ item.amount }} / {{ item.qty }}</td>
+          <td class="py-2 px-4">{{ formatSalesUnit(item.amount, item.qty) }}</td>
+          <td v-if="isDaysCompare" class="py-2 px-4">
+            {{ formatSalesUnit(item.amount2, item.qty2) }}
+          </td>
           <td class="py-2 px-4">{{ skuRefundRatesMap[item.sku] || 0 }}%</td>
         </tr>
       </tbody>
@@ -33,9 +29,7 @@
       >
         Previous
       </button>
-      <span class="text-gray-600"
-        >Page {{ currentPage }} of {{ totalPages }}</span
-      >
+      <span class="text-gray-600">Page {{ currentPage }} of {{ totalPages }}</span>
       <button
         @click="nextPage"
         :disabled="currentPage === totalPages"
@@ -52,20 +46,24 @@ import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
 
 export default {
-  props: {
-    selectedColumns: {
-      type: Array,
-      default: () => [],
-    },
-  },
-  setup(props) {
+  setup() {
     const store = useStore();
     const currentPage = ref(1);
     const itemsPerPage = 10;
-    const tableHeaders = ["SKU", "Product Name", "Sales / Unit", "SKU Refund Rate"];
 
+    const selectedColumns = computed(() => store.state.sales.selectedColumns);
     const skuData = computed(() => store.state.sales.skuData);
     const skuRefundRates = computed(() => store.state.sales.skuRefundRates);
+
+    const isDaysCompare = computed(() => selectedColumns.value.length === 2);
+
+    const tableHeaders = computed(() => [
+      "SKU",
+      "Product Name",
+      `Sales / Unit (${selectedColumns.value[0] || ''})`,
+      ...(isDaysCompare.value ? [`Sales / Unit (${selectedColumns.value[1] || ''})`] : []),
+      "SKU Refund Rate",
+    ]);
 
     const totalPages = computed(() => {
       const totalItems = skuData.value?.Data?.item?.skuList?.length || 0;
@@ -80,13 +78,13 @@ export default {
     });
 
     const fetchSkuData = () => {
-      if (props.selectedColumns.length > 0) {
+      if (selectedColumns.value.length > 0) {
         store.dispatch("sales/fetchSkuData", {
-          isDaysCompare: props.selectedColumns.length === 2 ? 1 : 0,
+          isDaysCompare: isDaysCompare.value ? 1 : 0,
           pageNumber: Math.ceil(currentPage.value / 3),
           pageSize: 30,
-          salesDate: props.selectedColumns[0],
-          salesDate2: props.selectedColumns[1] || "0",
+          salesDate: selectedColumns.value[0],
+          salesDate2: selectedColumns.value[1] || "",
         });
       }
     };
@@ -112,6 +110,9 @@ export default {
     const prevPage = () => {
       if (currentPage.value > 1) {
         currentPage.value--;
+        if (currentPage.value % 3 === 0) {
+          fetchSkuData();
+        }
         fetchSkuRefundRates();
       }
     };
@@ -126,8 +127,15 @@ export default {
       }
     };
 
+    const formatSalesUnit = (amount, qty) => {
+      if (amount === undefined || qty === undefined) {
+        return 'N/A';
+      }
+      return `${amount} / ${qty}`;
+    };
+
+    watch(selectedColumns, fetchSkuData, { immediate: true });
     watch(paginatedSkuData, fetchSkuRefundRates, { immediate: true });
-    watch(() => props.selectedColumns, fetchSkuData, { immediate: true });
 
     return {
       paginatedSkuData,
@@ -137,6 +145,8 @@ export default {
       nextPage,
       skuRefundRatesMap,
       tableHeaders,
+      isDaysCompare,
+      formatSalesUnit,
     };
   },
 };

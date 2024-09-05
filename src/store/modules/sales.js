@@ -8,6 +8,7 @@ export default {
     salesData: [],
     skuData: [],
     skuRefundRates: [],
+    selectedColumns: [],
   },
   mutations: {
     SET_SALES_DATA(state, data) {
@@ -18,6 +19,9 @@ export default {
     },
     SET_SKU_REFUND_RATES(state, data) {
       state.skuRefundRates = data;
+    },
+    SET_SELECTED_COLUMNS(state, columns) {
+      state.selectedColumns = columns;
     },
   },
   actions: {
@@ -65,6 +69,9 @@ export default {
         console.error("Error fetching SKU refund rates:", error);
         throw error;
       }
+    },
+    updateSelectedColumns({ commit }, columns) {
+      commit("SET_SELECTED_COLUMNS", columns);
     },
   },
 };
