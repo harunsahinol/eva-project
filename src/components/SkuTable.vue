@@ -28,18 +28,35 @@
             {{ formatSalesUnit(item.amount2, item.qty2) }} <br />
             ({{ item.qty2 ? (item.amount2 / item.qty2).toFixed(2) : "N/A" }})
             <span v-if="isDaysCompare" class="ml-2">
-              <span
-                v-html="getSalesComparisonArrow(item.amount, item.amount2)"
-              ></span>
+              <span v-html="getSalesComparisonArrow(item.amount, item.amount2)"></span>
             </span>
           </td>
           <td class="py-2 px-4">{{ skuRefundRatesMap[item.sku] || 0 }}%</td>
         </tr>
       </tbody>
     </table>
-    <!-- Pagination controls remain unchanged -->
+    <div class="pagination-controls mt-4 flex justify-between items-center">
+      <button
+        @click="prevPage"
+        :disabled="currentPage === 1"
+        class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+      >
+        Previous
+      </button>
+      <span class="text-gray-600"
+        >Page {{ currentPage }} of {{ totalPages }}</span
+      >
+      <button
+        @click="nextPage"
+        :disabled="currentPage === totalPages"
+        class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+    </div>
   </div>
 </template>
+
 <script>
 import { ref, computed, watch } from "vue";
 import { useStore } from "vuex";
@@ -62,11 +79,7 @@ export default {
       "Product Name",
       `Sales / Unit <br/>${selectedColumns.value[0] || ""}<br/>(Avg. Price)`,
       ...(isDaysCompare.value
-        ? [
-            `Sales / Unit <br/>${
-              selectedColumns.value[1] || ""
-            }<br/>(Avg. Price)`,
-          ]
+        ? [`Sales / Unit <br/>${selectedColumns.value[1] || ""}<br/>(Avg. Price)`]
         : []),
       "SKU Refund Rate",
     ]);
@@ -93,18 +106,6 @@ export default {
       const end = start + itemsPerPage;
       return filteredSkuData.value.slice(start, end);
     });
-
-    const getSalesComparisonArrow = (amount1, amount2) => {
-      if (amount1 === undefined || amount2 === undefined) {
-        return "";
-      }
-      if (amount2 > amount1) {
-        return '<span class="text-green-500">&#9650;</span>'; // Green up arrow
-      } else if (amount2 < amount1) {
-        return '<span class="text-red-500">&#9660;</span>'; // Red down arrow
-      }
-      return ""; // Equal, no arrow
-    };
 
     const fetchSkuData = () => {
       if (selectedColumns.value && selectedColumns.value.length > 0) {
@@ -159,6 +160,19 @@ export default {
       return `${amount} / ${qty}`;
     };
 
+    const getSalesComparisonArrow = (amount1, amount2) => {
+      if (amount1 === undefined || amount2 === undefined) {
+        return '';
+      }
+      if (amount2 > amount1) {
+        return '<span class="text-green-500">&#9650;</span>'; // Green up arrow
+      } else if (amount2 < amount1) {
+        return '<span class="text-red-500">&#9660;</span>'; // Red down arrow
+      }
+      return ''; // Equal, no arrow
+    };
+
+
     watch(selectedColumns, fetchSkuData, { immediate: true, deep: true });
     watch(paginatedSkuData, fetchSkuRefundRates, { immediate: true });
     watch(searchQuery, () => {
@@ -183,8 +197,9 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .salesunit {
   white-space: nowrap;
 }
 </style>
+
