@@ -28,7 +28,6 @@ import { computed, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 
-console.log("Stored token:", localStorage.getItem("token"));
 
 export default {
   name: "App",

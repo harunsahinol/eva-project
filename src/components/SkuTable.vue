@@ -1,21 +1,39 @@
 <!-- src/components/SkuTable.vue -->
 <template>
-  <div v-if="paginatedSkuData.length > 0" class="mt-6 p-6 bg-white rounded-lg shadow-md">
+  <div
+    v-if="paginatedSkuData.length > 0"
+    class="mt-6 p-6 bg-white rounded-lg shadow-md"
+  >
+    <div class="mb-4">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="&#x1F50D; Search by product name"
+        class="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
     <table class="min-w-full bg-white border border-gray-200 rounded-lg">
       <thead>
         <tr class="bg-gray-100">
-          <th v-for="header in tableHeaders" :key="header" class="py-2 px-4 text-left text-gray-600 font-semibold">
-            {{ header }}
-          </th>
+          <th
+            v-for="header in tableHeaders"
+            :key="header"
+            class="py-2 px-4 text-left text-gray-600 font-bold"
+            v-html="header"
+          ></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="item in paginatedSkuData" :key="item.sku" class="border-t">
           <td class="py-2 px-4">{{ item.sku }}</td>
           <td class="py-2 px-4">{{ item.productName }}</td>
-          <td class="py-2 px-4">{{ formatSalesUnit(item.amount, item.qty) }}</td>
-          <td v-if="isDaysCompare" class="py-2 px-4">
-            {{ formatSalesUnit(item.amount2, item.qty2) }}
+          <td class="py-2 px-4 salesunit">
+            {{ formatSalesUnit(item.amount, item.qty) }} <br />
+            ({{ item.qty ? (item.amount / item.qty).toFixed(2) : "N/A" }})
+          </td>
+          <td v-if="isDaysCompare" class="py-2 px-4 salesunit">
+            {{ formatSalesUnit(item.amount2, item.qty2) }} <br />
+            ({{ item.qty2 ? (item.amount2 / item.qty2).toFixed(2) : "N/A" }})
           </td>
           <td class="py-2 px-4">{{ skuRefundRatesMap[item.sku] || 0 }}%</td>
         </tr>
@@ -29,7 +47,9 @@
       >
         Previous
       </button>
-      <span class="text-gray-600">Page {{ currentPage }} of {{ totalPages }}</span>
+      <span class="text-gray-600"
+        >Page {{ currentPage }} of {{ totalPages }}</span
+      >
       <button
         @click="nextPage"
         :disabled="currentPage === totalPages"
@@ -50,6 +70,7 @@ export default {
     const store = useStore();
     const currentPage = ref(1);
     const itemsPerPage = 10;
+    const searchQuery = ref("");
 
     const selectedColumns = computed(() => store.state.sales.selectedColumns);
     const skuData = computed(() => store.state.sales.skuData);
@@ -60,25 +81,38 @@ export default {
     const tableHeaders = computed(() => [
       "SKU",
       "Product Name",
-      `Sales / Unit (${selectedColumns.value[0] || ''})`,
-      ...(isDaysCompare.value ? [`Sales / Unit (${selectedColumns.value[1] || ''})`] : []),
+      `Sales / Unit <br/>${selectedColumns.value[0] || ""}<br/>Avg. Price`,
+      ...(isDaysCompare.value
+        ? [`Sales / Unit <br/>${selectedColumns.value[1] || ""}<br/>Avg. Price`]
+        : []),
       "SKU Refund Rate",
     ]);
 
+    const filteredSkuData = computed(() => {
+      const skuList = skuData.value?.Data?.item?.skuList || [];
+      if (!searchQuery.value) return skuList;
+      return skuList.filter(
+        (item) =>
+          item.productName &&
+          item.productName
+            .toLowerCase()
+            .includes(searchQuery.value.toLowerCase())
+      );
+    });
+
     const totalPages = computed(() => {
-      const totalItems = skuData.value?.Data?.item?.skuList?.length || 0;
+      const totalItems = filteredSkuData.value.length;
       return Math.ceil(totalItems / itemsPerPage);
     });
 
     const paginatedSkuData = computed(() => {
-      const skuList = skuData.value?.Data?.item?.skuList || [];
       const start = (currentPage.value - 1) * itemsPerPage;
       const end = start + itemsPerPage;
-      return skuList.slice(start, end);
+      return filteredSkuData.value.slice(start, end);
     });
 
     const fetchSkuData = () => {
-      if (selectedColumns.value.length > 0) {
+      if (selectedColumns.value && selectedColumns.value.length > 0) {
         store.dispatch("sales/fetchSkuData", {
           isDaysCompare: isDaysCompare.value ? 1 : 0,
           pageNumber: Math.ceil(currentPage.value / 3),
@@ -90,13 +124,15 @@ export default {
     };
 
     const skuRefundRatesMap = computed(() => {
-      const data = skuRefundRates.value.Data || [];
-      return data.reduce((acc, item) => {
-        if (item.sku && item.refundRate !== undefined) {
-          acc[item.sku] = item.refundRate;
-        }
-        return acc;
-      }, {});
+      const data = skuRefundRates.value?.Data || [];
+      return Array.isArray(data)
+        ? data.reduce((acc, item) => {
+            if (item.sku && item.refundRate !== undefined) {
+              acc[item.sku] = item.refundRate;
+            }
+            return acc;
+          }, {})
+        : {};
     });
 
     const fetchSkuRefundRates = () => {
@@ -110,9 +146,6 @@ export default {
     const prevPage = () => {
       if (currentPage.value > 1) {
         currentPage.value--;
-        if (currentPage.value % 3 === 0) {
-          fetchSkuData();
-        }
         fetchSkuRefundRates();
       }
     };
@@ -120,22 +153,23 @@ export default {
     const nextPage = () => {
       if (currentPage.value < totalPages.value) {
         currentPage.value++;
-        if (currentPage.value % 3 === 1) {
-          fetchSkuData();
-        }
         fetchSkuRefundRates();
       }
     };
 
     const formatSalesUnit = (amount, qty) => {
       if (amount === undefined || qty === undefined) {
-        return 'N/A';
+        return "N/A";
       }
       return `${amount} / ${qty}`;
     };
 
-    watch(selectedColumns, fetchSkuData, { immediate: true });
+    watch(selectedColumns, fetchSkuData, { immediate: true, deep: true });
     watch(paginatedSkuData, fetchSkuRefundRates, { immediate: true });
+    watch(searchQuery, () => {
+      currentPage.value = 1;
+      fetchSkuRefundRates();
+    });
 
     return {
       paginatedSkuData,
@@ -147,7 +181,9 @@ export default {
       tableHeaders,
       isDaysCompare,
       formatSalesUnit,
+      searchQuery,
     };
   },
 };
 </script>
+

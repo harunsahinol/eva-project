@@ -2,7 +2,7 @@
 <template>
   <div>
     <SalesChart />
-    <SkuTable />
+
   </div>
 </template>
 
@@ -10,12 +10,12 @@
 import { onMounted } from 'vue';
 import { useStore } from 'vuex';
 import SalesChart from './SalesChart.vue';
-import SkuTable from './SkuTable.vue';
+
 
 export default {
   components: {
     SalesChart,
-    SkuTable,
+
   },
   setup() {
     const store = useStore();

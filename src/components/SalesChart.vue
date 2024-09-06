@@ -75,22 +75,40 @@ export default {
                 events: {
                   click: function () {
                     const columnDate = this.category;
+
                     if (selectedColumns.value.length === 0) {
+                      // If no columns are selected, add the clicked column
                       selectedColumns.value.push(columnDate);
                     } else if (selectedColumns.value.length === 1) {
-                      if (selectedColumns.value[0] !== columnDate) {
+                      // If one column is already selected
+                      if (selectedColumns.value[0] < columnDate) {
+                        // If the clicked column is later, add it as the end date
+                        selectedColumns.value.push(columnDate);
+                      } else if (selectedColumns.value[0] > columnDate) {
+                        // If the clicked column is earlier, add it as the start date
                         selectedColumns.value.unshift(columnDate);
                       } else {
+                        // If the same column is clicked again, deselect it
                         selectedColumns.value = [];
                       }
-                    } else {
+                    } else if (selectedColumns.value.length === 2) {
+                      // If two columns are already selected
                       if (selectedColumns.value.includes(columnDate)) {
-                        selectedColumns.value = selectedColumns.value.filter(date => date !== columnDate);
+                        // If the clicked column is already selected, remove it
+                        selectedColumns.value = selectedColumns.value.filter(
+                          (date) => date !== columnDate
+                        );
                       } else {
-                        selectedColumns.value = [columnDate, selectedColumns.value[0]];
+                        // If a new column is clicked, replace the range with the new selection
+                        selectedColumns.value = [columnDate];
                       }
                     }
-                    store.dispatch("sales/updateSelectedColumns", selectedColumns.value);
+
+                    // Dispatch the updated selection to the store
+                    store.dispatch(
+                      "sales/updateSelectedColumns",
+                      selectedColumns.value
+                    );
                   },
                 },
               },

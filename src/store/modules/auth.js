@@ -49,7 +49,6 @@ export default {
         const response = await api.post("/user/user-information", {
           email: "homework@eva.guru",
         });
-        console.log("User Info:", response.data);
         commit("SET_USER_INFO", response.data);
       } catch (error) {
         console.error("Failed to get user info:", error);
